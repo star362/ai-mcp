@@ -20,7 +20,8 @@ class AiMcpApplicationTests {
     @Test
     void contextLoads() {
         // 初始化 SSE Client
-        HttpClientSseClientTransport build = HttpClientSseClientTransport.builder("https://mcp.amap.com")
+        HttpClientSseClientTransport build = HttpClientSseClientTransport
+                .builder("https://mcp.amap.com")
                 .sseEndpoint("/sse?key="+ gdMcpKey)
                 .build();
 
@@ -29,14 +30,62 @@ class AiMcpApplicationTests {
                 .build();
         client.initialize().block();
 
+//        Mono<McpSchema.ListToolsResult> listToolsResultMono = client.listTools();
 
-
-                // 发起请求
+        // 发起请求
         Mono<McpSchema.CallToolResult> callToolResultMono = client
                 .callTool(new McpSchema.CallToolRequest("maps_weather", Map.of("city", "杭州")));
         McpSchema.CallToolResult result = callToolResultMono.block();
         
         System.out.println("返回的消息：" + result.content());
+    }
+
+
+    @Test
+    void mcpToolsTest() throws InterruptedException {
+        // 初始化 SSE Client
+        HttpClientSseClientTransport build = HttpClientSseClientTransport
+                .builder("https://mcp.amap.com")
+                .sseEndpoint("/sse?key="+ gdMcpKey)
+                .build();
+
+        var client = McpClient.async(build)
+                .initializationTimeout(Duration.ofSeconds(20))
+                .build();
+//        client.initialize().block();
+
+//        Mono<McpSchema.ListResourcesResult> listResourcesResultMono = client.listResources();
+
+//        client.listTools().subscribe(a->{
+//            a.tools().stream().forEach(t->{
+//                System.out.println(t.name());
+//                System.out.println(t.description());
+//                System.out.println(t.inputSchema());
+//            });
+//        });
+
+//        client.closeGracefully();
+
+        Mono.using(()->client,// 创建资源
+                c -> {
+                  // 使用资源
+                    client.initialize().block();
+                    return client.listTools(); // 返回要处理的 Mono
+                },
+                c -> client.closeGracefully()// 释放资源
+        ).subscribe(a -> {
+            a.tools().stream().forEach(t -> {
+                System.out.println(t.name());
+                System.out.println(t.description());
+                System.out.println(t.inputSchema());
+            });
+        }, throwable -> {
+            System.err.println("Error occurred: " + throwable.getMessage());
+        });
+
+
+        // 等待异步操作完成（仅用于测试）
+        Thread.sleep(10000); // 根据实际情况调整等待时间
     }
 
 }
