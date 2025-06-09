@@ -10,6 +10,7 @@ import reactor.core.publisher.Mono;
 
 import java.time.Duration;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 
 @SpringBootTest
 class AiMcpApplicationTests {
@@ -22,7 +23,7 @@ class AiMcpApplicationTests {
         // 初始化 SSE Client
         HttpClientSseClientTransport build = HttpClientSseClientTransport
                 .builder("https://mcp.amap.com")
-                .sseEndpoint("/sse?key="+ gdMcpKey)
+                .sseEndpoint("/sse?key=" + gdMcpKey)
                 .build();
 
         var client = McpClient.async(build)
@@ -36,7 +37,7 @@ class AiMcpApplicationTests {
         Mono<McpSchema.CallToolResult> callToolResultMono = client
                 .callTool(new McpSchema.CallToolRequest("maps_weather", Map.of("city", "杭州")));
         McpSchema.CallToolResult result = callToolResultMono.block();
-        
+
         System.out.println("返回的消息：" + result.content());
     }
 
@@ -46,7 +47,7 @@ class AiMcpApplicationTests {
         // 初始化 SSE Client
         HttpClientSseClientTransport build = HttpClientSseClientTransport
                 .builder("https://mcp.amap.com")
-                .sseEndpoint("/sse?key="+ gdMcpKey)
+                .sseEndpoint("/sse?key=" + gdMcpKey)
                 .build();
 
         var client = McpClient.async(build)
@@ -66,9 +67,11 @@ class AiMcpApplicationTests {
 
 //        client.closeGracefully();
 
-        Mono.using(()->client,// 创建资源
+        var latch = new CountDownLatch(1);
+
+        Mono.using(() -> client,// 创建资源
                 c -> {
-                  // 使用资源
+                    // 使用资源
                     client.initialize().block();
                     return client.listTools(); // 返回要处理的 Mono
                 },
@@ -79,13 +82,16 @@ class AiMcpApplicationTests {
                 System.out.println(t.description());
                 System.out.println(t.inputSchema());
             });
+            latch.countDown();
         }, throwable -> {
             System.err.println("Error occurred: " + throwable.getMessage());
         });
 
-
-        // 等待异步操作完成（仅用于测试）
-        Thread.sleep(10000); // 根据实际情况调整等待时间
+        try {
+            latch.await(); // 阻塞直到 countDown 被调用
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt(); // 重新设置中断状态
+        }
     }
 
 }
