@@ -15,7 +15,7 @@ import java.util.concurrent.CountDownLatch;
 @SpringBootTest
 class AiMcpApplicationTests {
 
-    @Value("${gdmcpKey}")
+    @Value("${gdmcpKey:111}")
     private String gdMcpKey;
 
     @Test

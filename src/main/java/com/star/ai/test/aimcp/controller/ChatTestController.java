@@ -20,7 +20,7 @@ import java.time.Duration;
 @RestController
 public class ChatTestController {
 
-    @Value("${gdmcpKey}")
+    @Value("${gdmcpKey:111}")
     private String gdMcpKey;
     private ChatClient client;
 

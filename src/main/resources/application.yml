@@ -1,3 +1,13 @@
 spring:
   application:
     name: ai-mcp
+
+  data:
+    mongodb:
+      uri: mongodb://admin:admin123@localhost:27017/star-test?maxpoolsize=10&minpoolsize=1&maxidletimems=600000&maxlifetimems=1800000&authSource=admin
+      database: star-test
+
+logging:
+  level:
+    org.springframework.data.mongodb: DEBUG
+    com.mongodb: DEBUG

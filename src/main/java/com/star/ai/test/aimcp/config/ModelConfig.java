@@ -12,7 +12,7 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class ModelConfig {
 
-    @Value("${deepseekKey}")
+    @Value("${deepseekKey:111}")
     private String deepseekKey;
 
     @Bean
