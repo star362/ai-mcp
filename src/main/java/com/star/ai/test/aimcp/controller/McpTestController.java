@@ -22,7 +22,7 @@ public class McpTestController {
     private String gdMcpKey;
 
     @GetMapping
-    public Flux<Object> test(@RequestParam String message) {
+    public Flux<Map<String, Object>> test(@RequestParam String message) {
         HttpClientSseClientTransport build = HttpClientSseClientTransport
                 .builder("https://mcp.amap.com")
                 .sseEndpoint("/sse?key=" + gdMcpKey)
@@ -32,14 +32,21 @@ public class McpTestController {
                 .initializationTimeout(Duration.ofSeconds(20))
                 .build();
 
-        Flux<Object> map = Mono.fromCallable(() -> {
+        Flux<Map<String, Object>> map = Mono.fromCallable(() -> {
                     client.initialize().block();
                     return client;
                 })
                 .flatMapMany(c -> c.callTool(
                         new McpSchema.CallToolRequest("maps_weather", Map.of("city", "杭州"))
                 ))
-                .map(McpSchema.CallToolResult::content);
+                .map(resulr -> {
+                    return resulr.content().stream().findFirst().map(c -> {
+                        String type = c.type();
+                        return Map.of("type", type, "content", c);
+                    }).get();
+                });
+
+
         return map;
     }
 

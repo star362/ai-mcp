@@ -45,7 +45,12 @@ class AiMcpApplicationTests {
                 .callTool(new McpSchema.CallToolRequest("maps_weather", Map.of("city", "杭州")));
         McpSchema.CallToolResult result = callToolResultMono.block();
 
-        System.out.println("返回的消息：" + result.content());
+        List<McpSchema.Content> content = result.content();
+        Map<String, Object> stringObjectMap = content.stream().findFirst().map(c -> {
+            String type = c.type();
+            return Map.of("type", type, "content", c);
+        }).get();
+        System.out.println("返回的消息：" + stringObjectMap);
     }
 
 
