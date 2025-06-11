@@ -126,10 +126,33 @@ class AiMcpApplicationTests {
         System.out.println(stringMapHashMap);
 
         Map.Entry<String, Map<String, String>> next = stringMapHashMap.entrySet().stream().iterator().next();
-        // 初始化 SSE Client
+
+        // 从 Map 中获取原始 URL，建议使用 final 声明，防止后续意外修改
+        final String originalUrl = next.getValue().get("url");
+
+// 为最终结果声明变量，并提供有意义的名称
+        String baseUrl;
+        String ssePath;
+
+// 我们只需要调用一次 indexOf，这样更高效
+        final String sseMarker = "/sse";
+        final int sseIndex = originalUrl.indexOf(sseMarker);
+
+        if (sseIndex != -1) { // 如果找到了 "/sse" (indexOf返回-1表示未找到)
+            // 1. 截取 "/sse" 之前的部分作为基本URL
+            baseUrl = originalUrl.substring(0, sseIndex);
+            // 2. 截取从 "/sse" 开始到末尾的部分作为SSE路径
+            ssePath = originalUrl.substring(sseIndex);
+        } else {
+            // 如果 URL 中不包含 "/sse"，则baseUrl就是完整的原始URL
+            baseUrl = originalUrl;
+            // SSE 路径从其他配置中获取
+            ssePath = next.getValue().get("sseEndpoint");
+        }
+
         HttpClientSseClientTransport build = HttpClientSseClientTransport
-                .builder(next.getValue().get("url"))
-                .sseEndpoint(next.getValue().get("sseEndpoint"))
+                .builder(baseUrl)
+                .sseEndpoint(ssePath)
                 .build();
 
         var client = McpClient.async(build)
@@ -150,6 +173,7 @@ class AiMcpApplicationTests {
         });
 
         List<McpToolsTest> block = map.block();
+        System.out.println(block);
     }
 
     private static HashMap<String, Map<String, String>> jsonToMapTest() {
@@ -172,7 +196,12 @@ class AiMcpApplicationTests {
 
             Map<String, String> value = next.getValue();
             String url = value.get("url");
-            String sseEndpoint = value.get("sseEndpoint");
+            Map<String, String> url1 = new HashMap<>();
+            url1.put("url", url);
+            if(value.containsKey("sseEndpoint")){
+                url1.put("sseEndpoint", value.get("sseEndpoint"));
+            }
+            stringMapHashMap.put(key, url1);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
