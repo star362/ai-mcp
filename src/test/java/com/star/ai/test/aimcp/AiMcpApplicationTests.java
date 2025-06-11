@@ -173,7 +173,7 @@ class AiMcpApplicationTests {
         });
 
         List<McpToolsTest> block = map.block();
-        System.out.println(block);
+        block.stream().forEach(System.out::println);
     }
 
     private static HashMap<String, Map<String, String>> jsonToMapTest() {
