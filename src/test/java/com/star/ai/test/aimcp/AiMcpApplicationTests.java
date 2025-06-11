@@ -107,7 +107,6 @@ class AiMcpApplicationTests {
     }
 
 
-
     @Test
     public void mcpaddTest() {
 
@@ -130,11 +129,11 @@ class AiMcpApplicationTests {
         // 从 Map 中获取原始 URL，建议使用 final 声明，防止后续意外修改
         final String originalUrl = next.getValue().get("url");
 
-// 为最终结果声明变量，并提供有意义的名称
+        // 为最终结果声明变量，并提供有意义的名称
         String baseUrl;
         String ssePath;
 
-// 我们只需要调用一次 indexOf，这样更高效
+        // 我们只需要调用一次 indexOf，这样更高效
         final String sseMarker = "/sse";
         final int sseIndex = originalUrl.indexOf(sseMarker);
 
@@ -167,9 +166,7 @@ class AiMcpApplicationTests {
                 },
                 c -> client.closeGracefully()// 释放资源
         ).map(a -> {
-            return a.tools().stream().map(t -> {
-                return new McpToolsTest(t.name(), t.description(), t.inputSchema());
-            }).toList();
+            return a.tools().stream().map(t -> new McpToolsTest(t.name(), t.description(), t.inputSchema())).toList();
         });
 
         List<McpToolsTest> block = map.block();
@@ -190,7 +187,7 @@ class AiMcpApplicationTests {
 
         HashMap<String, Map<String, String>> stringMapHashMap = null;
         try {
-            stringMapHashMap = handelJson(configJson);
+            stringMapHashMap = handelmcpJson(configJson);
             Map.Entry<String, Map<String, String>> next = stringMapHashMap.entrySet().iterator().next();
             String key = next.getKey();
 
@@ -198,7 +195,7 @@ class AiMcpApplicationTests {
             String url = value.get("url");
             Map<String, String> url1 = new HashMap<>();
             url1.put("url", url);
-            if(value.containsKey("sseEndpoint")){
+            if (value.containsKey("sseEndpoint")) {
                 url1.put("sseEndpoint", value.get("sseEndpoint"));
             }
             stringMapHashMap.put(key, url1);
@@ -209,13 +206,7 @@ class AiMcpApplicationTests {
     }
 
 
-    /**
-     * 处理json
-     *
-     * @param configJson
-     * @throws JsonProcessingException
-     */
-    private static HashMap<String, Map<String, String>> handelJson(String configJson) throws JsonProcessingException {
+    private static HashMap<String, Map<String, String>> handelmcpJson(String configJson) throws JsonProcessingException {
         ObjectMapper mapper = new ObjectMapper();
         HashMap<String, Map<String, String>> mcpServersMap = new HashMap<>();
         JsonNode jsonNode = mapper.readTree(configJson);
