@@ -29,52 +29,49 @@ import java.util.concurrent.CountDownLatch;
 
 public class StreamMcpTest extends AiMcpApplicationTests {
 
-    @Test
-    public void mongoTest() {
-        HttpClientStreamableHttpTransport streamableHttpTransport = HttpClientStreamableHttpTransport
-                .builder("http://localhost:3000")
-                .build();
 
-        McpSyncClient client = McpClient.sync(streamableHttpTransport)
-                .requestTimeout(Duration.ofSeconds(10))
-                .capabilities(McpSchema.ClientCapabilities.builder()
-                        .roots(true)      // Enable roots capability
-                        .sampling()       // Enable sampling capability
-                        .build())
-                .build();
-
-        // Initialize connection
-        client.initialize();
-
-        // List available tools
-        McpSchema.ListToolsResult tools = client.listTools();
-        System.out.println("Available tools: " + tools.tools());
-        tools.tools().forEach(a-> System.out.println(a.name()));
-    }
 
 
     @Test
     public void simpleConnectionTest() {
 
-
         // 初始化 SSE Client
         HttpClientStreamableHttpTransport build = HttpClientStreamableHttpTransport
-                .builder("http://127.0.0.1:3000/mcp")
+                .builder("http://127.0.0.1:3000")
+                .endpoint("/mcp/")
                 .build();
 
         var client = McpClient.async(build)
                 .initializationTimeout(Duration.ofSeconds(20))
                 .build();
-        client.initialize().block();
 
-        client.listTools().subscribe(a->{
-            a.tools().stream().forEach(t->{
+
+
+        var latch = new CountDownLatch(1);
+
+        Mono.using(() -> client,// 创建资源
+                c -> {
+                    // 使用资源
+                    client.initialize();
+                    return client.listTools(); // 返回要处理的 Mono
+                },
+                c -> client.closeGracefully()// 释放资源
+        ).subscribe(a -> {
+            a.tools().stream().forEach(t -> {
                 System.out.println(t.name());
                 System.out.println(t.description());
                 System.out.println(t.inputSchema());
             });
+            latch.countDown();
+        }, throwable -> {
+            System.err.println("Error occurred: " + throwable.getMessage());
         });
 
+        try {
+            latch.await(); // 阻塞直到 countDown 被调用
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt(); // 重新设置中断状态
+        }
 
 
     }
@@ -82,7 +79,34 @@ public class StreamMcpTest extends AiMcpApplicationTests {
 
 
 
+    public static void main(String[] args) {
+        McpClientTransport transport;
+        String url = "http://localhost:3000";
+        HttpClientStreamableHttpTransport.Builder httpBuilder = HttpClientStreamableHttpTransport.builder(url);
+        httpBuilder.endpoint("/mcp/");
+        transport = httpBuilder.build();
 
+        McpSyncClient client = McpClient.sync(transport)
+                .requestTimeout(Duration.ofSeconds(20)) // Set a reasonable request timeout
+                .initializationTimeout(Duration.ofSeconds(21)) // Set a reasonable initialization timeout
+                .build();
+
+        try {
+            // Initialize the connection
+            client.initialize();
+
+            McpSchema.ListToolsResult tools = client.listTools();
+//            logger.log(Level.INFO, "Available tools: {0}", tools.tools());
+            tools.tools().stream().forEach(t -> {
+                System.out.println(t.name());
+                System.out.println(t.description());
+                System.out.println(t.inputSchema());
+            });
+
+        } catch (Exception e) {
+//            logger.log(Level.SEVERE, "Failed to initialize MCP client from DebugServlet", e);
+        }
+    }
 
 
 }

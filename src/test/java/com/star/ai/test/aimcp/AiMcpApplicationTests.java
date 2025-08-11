@@ -5,7 +5,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.star.ai.test.aimcp.enetity.McpToolsTest;
 import io.modelcontextprotocol.client.McpClient;
+import io.modelcontextprotocol.client.McpSyncClient;
 import io.modelcontextprotocol.client.transport.HttpClientSseClientTransport;
+import io.modelcontextprotocol.client.transport.HttpClientStreamableHttpTransport;
+import io.modelcontextprotocol.spec.McpClientTransport;
 import io.modelcontextprotocol.spec.McpSchema;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.mcp.McpToolUtils;
@@ -109,17 +112,9 @@ class AiMcpApplicationTests {
     }
 
 
-    @Test
-    public void mcpaddTest() {
 
 
 
-
-    }
-
-    public static void main(String[] args) {
-
-    }
 
 
 
